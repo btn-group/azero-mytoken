@@ -27,33 +27,60 @@ mod mytoken {
                 contract.total_supply = supply;
             })
         }
-    }
 
-    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    /// module and test functions are marked with a `#[test]` attribute.
-    /// The below code is technically just normal Rust code.
-    #[cfg(test)]
-    mod tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
-        use super::*;
-
-        /// Imports `ink_lang` so we can use `#[ink::test]`.
-        use ink_lang as ink;
-
-        /// We test if the default constructor does its job.
-        #[ink::test]
-        fn default_works() {
-            let mytoken = Mytoken::default();
-            assert_eq!(mytoken.get(), false);
+        /// A message that can be called on instantiated contracts.
+        #[ink(message)]
+        pub fn total_supply(&self) -> u32 {
+            self.total_supply
         }
 
-        /// We test a simple use case of our contract.
-        #[ink::test]
-        fn it_works() {
-            let mut mytoken = Mytoken::new(false);
-            assert_eq!(mytoken.get(), false);
-            mytoken.flip();
-            assert_eq!(mytoken.get(), true);
+        #[ink(message)]
+        pub fn balance_of(&self, account: AccountId) -> u32 {
+            match self.balances.get(&account) {
+                Some(value) => value,
+                None => 0,
+            }
+        }
+
+        #[ink(message)]
+        pub fn transfer(&mut self, recipient: AccountId, amount: u32) {
+            let sender = self.env().caller();
+            let sender_balance = self.balance_of(sender);
+            if sender_balance < amount {
+                return;
+            }
+            self.balances.insert(sender, &(sender_balance - amount));
+            let recipient_balance = self.balance_of(recipient);
+            self.balances
+                .insert(recipient, &(recipient_balance + amount));
         }
     }
+
+    // /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
+    // /// module and test functions are marked with a `#[test]` attribute.
+    // /// The below code is technically just normal Rust code.
+    // #[cfg(test)]
+    // mod tests {
+    //     /// Imports all the definitions from the outer scope so we can use them here.
+    //     use super::*;
+
+    //     /// Imports `ink_lang` so we can use `#[ink::test]`.
+    //     use ink_lang as ink;
+
+    //     /// We test if the default constructor does its job.
+    //     #[ink::test]
+    //     fn default_works() {
+    //         let mytoken = Mytoken::default();
+    //         assert_eq!(mytoken.get(), false);
+    //     }
+
+    //     /// We test a simple use case of our contract.
+    //     #[ink::test]
+    //     fn it_works() {
+    //         let mut mytoken = Mytoken::new(false);
+    //         assert_eq!(mytoken.get(), false);
+    //         mytoken.flip();
+    //         assert_eq!(mytoken.get(), true);
+    //     }
+    // }
 }
