@@ -56,31 +56,42 @@ mod mytoken {
         }
     }
 
-    // /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    // /// module and test functions are marked with a `#[test]` attribute.
-    // /// The below code is technically just normal Rust code.
-    // #[cfg(test)]
-    // mod tests {
-    //     /// Imports all the definitions from the outer scope so we can use them here.
-    //     use super::*;
+    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
+    /// module and test functions are marked with a `#[test]` attribute.
+    /// The below code is technically just normal Rust code.
+    #[cfg(test)]
+    mod tests {
+        /// Imports all the definitions from the outer scope so we can use them here.
+        use super::*;
+        use ink_env::{test, DefaultEnvironment};
+        /// Imports `ink_lang` so we can use `#[ink::test]`.
+        use ink_lang as ink;
 
-    //     /// Imports `ink_lang` so we can use `#[ink::test]`.
-    //     use ink_lang as ink;
+        #[ink::test]
+        fn total_supply_works() {
+            let mytoken = Mytoken::new_token(1000);
+            assert_eq!(mytoken.total_supply(), 1000);
+        }
 
-    //     /// We test if the default constructor does its job.
-    //     #[ink::test]
-    //     fn default_works() {
-    //         let mytoken = Mytoken::default();
-    //         assert_eq!(mytoken.get(), false);
-    //     }
+        #[ink::test]
+        fn balance_of_works() {
+            let accounts = test::default_accounts::<DefaultEnvironment>();
+            test::set_caller::<DefaultEnvironment>(accounts.alice);
+            let mytoken = Mytoken::new_token(1000);
+            assert_eq!(mytoken.balance_of(accounts.alice), 1000);
+            assert_eq!(mytoken.balance_of(accounts.bob), 0);
+        }
 
-    //     /// We test a simple use case of our contract.
-    //     #[ink::test]
-    //     fn it_works() {
-    //         let mut mytoken = Mytoken::new(false);
-    //         assert_eq!(mytoken.get(), false);
-    //         mytoken.flip();
-    //         assert_eq!(mytoken.get(), true);
-    //     }
-    // }
+        #[ink::test]
+        fn transfer_works() {
+            let accounts = test::default_accounts::<DefaultEnvironment>();
+            test::set_caller::<DefaultEnvironment>(accounts.alice);
+            let mut mytoken = Mytoken::new_token(1000);
+            assert_eq!(mytoken.balance_of(accounts.alice), 1000);
+            assert_eq!(mytoken.balance_of(accounts.bob), 0);
+            mytoken.transfer(accounts.bob, 100);
+            assert_eq!(mytoken.balance_of(accounts.alice), 900);
+            assert_eq!(mytoken.balance_of(accounts.bob), 100);
+        }
+    }
 }
